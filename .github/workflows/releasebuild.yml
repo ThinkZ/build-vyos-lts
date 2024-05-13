@@ -10,23 +10,23 @@ on:
   push:
     tags:
       - 'v*'
-# on:
-#   workflow_dispatch  
-
+  workflow_dispatch:
+    inputs:
+      tag: 
+        description: "The tag version you want to build"
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Set env
-      run: echo ::set-env name=RELEASE_VERSION::${GITHUB_REF:10}    
-
-    # - name: Get current date
-    #   id: date
-    #   uses: Kaven-Universe/github-action-current-date-time@v1.1.0
-    #   with:
-    #    format: "YYYYMMDDHHmmss"
+    - name: Set version
+      run: |
+        if [[ -z "${{ github.event.inputs.tag }}" ]]; then
+          echo "VYOS_VERSION=${{ github.ref_name }}" >> $GITHUB_ENV
+        else 
+          echo "VYOS_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
+        fi
 
     - name: Pull vyos-build docker image
       run: |
@@ -42,7 +42,7 @@ jobs:
       uses: svenstaro/upload-release-action@v2
       with:
         repo_token: ${{ secrets.myToken }}
-        file: vyos-build/build/vyos-${{ env.RELEASE_VERSION }}-amd64.iso
+        file: vyos-build/build/vyos-${{ env.VYOS_VERSION }}-amd64.iso
         tag: vyos-${{ env.RELEASE_VERSION }}
         overwrite: true
         file_glob: true
